@@ -413,32 +413,50 @@ void WiFlyDevice::setConfiguration(boolean adhocMode) {
   enterCommandMode();
 
   // TODO: Handle configuration better
-  // Turn off auto-connect
-  sendCommand(F("set wlan join 0"));
+  // Turn on auto-connect
+  sendCommand(F("set wlan join 1"));
+  
+  // Auto-scan for channels
+  sendCommand(F("set wlan channel 0"));
+  
+  // Retry connecting to AP in case of random drop
+  sendCommand(F("set wlan linkmon 5"));
+  
+  // Use the external antenna
+  sendCommand(F("set wlan extant 1"));
+  
+  // Defaults to 0x7. 0x6 will cause an established TCP conn. to be closed if access to the AP is lost for some reason. This prevents hangs
+  sendCommand(F("set ip flags 0x6"));
+  
+  // Only act as TCP client right now, not a client/server as default. Server hangs on multicast is the hypothesis as of now
+  sendCommand(F("set ip protocol 3"));
+  
+  // If inactivity on a socket after 2 seconds, close the connection. Again, try to keep sockets closed when possible
+  sendCommand(F("set comm idle 2"));
 
-  // TODO: Turn off server functionality until needed
-  //       with "set ip protocol <something>"
-
-  // Set server port
-  sendCommand(F("set ip localport "), true);
-  // TODO: Handle numeric arguments correctly.
-  uart->print(serverPort);
-  sendCommand("");
+  // // TODO: Turn off server functionality until needed
+  // //       with "set ip protocol <something>"
+  // 
+  // // Set server port
+  // sendCommand(F("set ip localport "), true);
+  // // TODO: Handle numeric arguments correctly.
+  // uart->print(serverPort);
+  // sendCommand("");
 
   // Turn off remote connect message
   sendCommand(F("set comm remote 0"));
 
-  sendCommand(F("set t z 23"));
-  sendCommand(F("set time address 129.6.15.28"));
-  sendCommand(F("set time port 123"));
-  sendCommand(F("set t e 15"));
+  // sendCommand(F("set t z 23"));
+  // sendCommand(F("set time address 129.6.15.28"));
+  // sendCommand(F("set time port 123"));
+  // sendCommand(F("set t e 15"));
 
   // CDT: Enable the DHCP mode again, if the shield
   // was last used in AdHoc mode we won't do things correctly without
   // these changes.
   if(!adhocMode)
   {
-	sendCommand(F("set wlan auth 4"));
+	sendCommand(F("set wlan auth 3"));
 	
 	sendCommand(F("set ip dhcp 1"));
   } 
@@ -644,7 +662,7 @@ boolean WiFlyDevice::configure(byte option, unsigned long value) {
     case ANTENNA_TYPE:
       enterCommandMode();
     
-      uart->print("set wlan ext_antenna ");
+      uart->print("set wlan extant ");
       uart->println(value);
 
       reboot();
